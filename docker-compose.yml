@@ -1,0 +1,68 @@
+version: "3.3"
+
+services:
+  nextjs:
+    build:
+     # The directory in which docker file is located for project
+      context: frontend
+     # Dockerfile.dev specifys npm run dev in docker file
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+     # Required to sync file changes
+      - ./frontend:/usr/src/app
+     # Required to no break node_modules
+      - /usr/src/app/node_modules
+     # Required for nextjs
+      - /usr/src/app/.next
+    ports:
+      - 3001:3001
+    # networks:
+    #   - theway
+
+  strapi:
+    image: strapi/strapi
+    restart: unless-stopped
+    container_name: strapi
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_NAME: TheWay
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 4321
+      DATABASE_USERNAME: admin
+      DATABASE_PASSWORD: password
+    links:
+      - postgres:postgres
+    volumes:
+      - ./cms:/srv/app
+    ports:
+      - '1337:1337'
+    # networks:
+    #   - theway
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: TheWay
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./data:/data/postgres
+    ports:
+      - '4321:4321'
+    # networks:
+    #   - theway
+
+  # npm:
+  #       image: node:13.7
+  #       container_name:  npm
+  #       volumes:
+  #           - ./src:/var/www/html
+  #       working_dir: /var/www/html
+  #       entrypoint: ['npm']
+  #       # networks:
+  #       #     - theway
